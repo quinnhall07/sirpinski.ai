@@ -1,0 +1,11 @@
+{
+  "name": "sir-pinski",
+  "version": "1.0.0",
+  "description": "Sir Pinski — Gatton Academy's finest (and only) AI mascot",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0"
+  }
+}

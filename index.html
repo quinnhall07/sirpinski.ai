@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sir Pinski — Gatton Academy AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  /* ─── CSS Variables ─────────────────────────────────────────── */
+  :root {
+    --bg:          #0a0a0f;
+    --surface:     #111118;
+    --surface2:    #1a1a24;
+    --border:      #2a2a3a;
+    --accent:      #00ff88;
+    --accent2:     #ff3366;
+    --accent3:     #ffcc00;
+    --text:        #d4d4e8;
+    --text-dim:    #666688;
+    --pinski:      #00ff88;
+    --user-bubble: #1e1e2e;
+    --ai-bubble:   #0d1a14;
+    --glow:        0 0 20px rgba(0,255,136,0.3);
+    --font-mono:   'IBM Plex Mono', monospace;
+    --font-display:'Bebas Neue', sans-serif;
+  }
+
+  /* ─── Reset ─────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ─── CRT scanline overlay ───────────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+    animation: scanroll 8s linear infinite;
+  }
+
+  @keyframes scanroll {
+    from { background-position: 0 0; }
+    to   { background-position: 0 100px; }
+  }
+
+  /* ─── Layout ─────────────────────────────────────────────────── */
+  #app {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: 100vh;
+    height: 100vh;
+  }
+
+  /* ─── Sidebar ────────────────────────────────────────────────── */
+  #sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    gap: 24px;
+    overflow: hidden;
+  }
+
+  .logo-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Sir Pinski Triangle SVG logo */
+  .pinski-logo {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    filter: drop-shadow(0 0 12px var(--accent));
+    animation: logoFloat 3s ease-in-out infinite;
+    transition: filter 0.5s;
+  }
+
+  @keyframes logoFloat {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-6px); }
+  }
+
+  .logo-name {
+    font-family: var(--font-display);
+    font-size: 32px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-shadow: 0 0 20px var(--accent);
+    text-align: center;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  /* ─── Dumbness Meter ─────────────────────────────────────────── */
+  .dumb-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .dumb-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .dumb-bar-track {
+    height: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .dumb-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent3) 60%, var(--accent2) 100%);
+    border-radius: 4px;
+    transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .dumb-readout {
+    font-family: var(--font-display);
+    font-size: 24px;
+    color: var(--accent);
+    text-shadow: 0 0 10px var(--accent);
+    transition: color 0.5s;
+    letter-spacing: 1px;
+  }
+
+  .dumb-status {
+    font-size: 11px;
+    color: var(--text-dim);
+    min-height: 32px;
+    transition: color 0.3s;
+  }
+
+  /* ─── Hammer Button ──────────────────────────────────────────── */
+  .hammer-btn {
+    background: none;
+    border: 2px solid var(--accent2);
+    border-radius: 8px;
+    color: var(--accent2);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 1px;
+  }
+
+  .hammer-btn:hover {
+    background: rgba(255,51,102,0.1);
+    box-shadow: 0 0 20px rgba(255,51,102,0.3);
+    transform: translateY(-1px);
+  }
+
+  .hammer-btn:active {
+    transform: translateY(2px) scale(0.97);
+  }
+
+  .hammer-btn.maxed {
+    border-color: var(--text-dim);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  .hammer-icon {
+    font-size: 20px;
+    display: inline-block;
+    transition: transform 0.1s;
+  }
+
+  .hammer-btn:active .hammer-icon {
+    transform: rotate(-30deg) scale(1.3);
+  }
+
+  /* ─── Reset Button ───────────────────────────────────────────── */
+  .reset-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 8px;
+    cursor: pointer;
+    text-align: center;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  .reset-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ─── Sidebar bottom ─────────────────────────────────────────── */
+  .sidebar-footer {
+    margin-top: auto;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  /* ─── Main Chat Area ─────────────────────────────────────────── */
+  #main {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ─── Chat Header ────────────────────────────────────────────── */
+  #chat-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+
+  .status-dot.offline {
+    background: var(--accent2);
+    box-shadow: 0 0 8px var(--accent2);
+    animation: none;
+  }
+
+  #chat-header-text {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* ─── Messages ───────────────────────────────────────────────── */
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  /* Glitch effect on messages at high dumb levels */
+  .glitch-mode .message.ai .bubble {
+    animation: textGlitch 4s infinite;
+  }
+
+  @keyframes textGlitch {
+    0%, 92%, 100% { transform: none; clip-path: none; }
+    93% { transform: skew(-1deg); clip-path: polygon(0 10%, 100% 10%, 100% 40%, 0 40%); color: var(--accent2); }
+    94% { transform: none; clip-path: none; }
+    96% { transform: skew(1deg); }
+    97% { transform: none; }
+  }
+
+  .message {
+    display: flex;
+    flex-direction: column;
+    max-width: 75%;
+    animation: msgIn 0.3s ease-out;
+  }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user {
+    align-self: flex-end;
+    align-items: flex-end;
+  }
+
+  .message.ai {
+    align-self: flex-start;
+    align-items: flex-start;
+  }
+
+  .msg-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    padding: 0 4px;
+  }
+
+  .message.ai .msg-label {
+    color: var(--accent);
+  }
+
+  .bubble {
+    padding: 12px 16px;
+    border-radius: 12px;
+    line-height: 1.6;
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .message.user .bubble {
+    background: var(--user-bubble);
+    border: 1px solid var(--border);
+    border-bottom-right-radius: 3px;
+  }
+
+  .message.ai .bubble {
+    background: var(--ai-bubble);
+    border: 1px solid rgba(0,255,136,0.2);
+    border-bottom-left-radius: 3px;
+    color: var(--text);
+    box-shadow: 0 0 30px rgba(0,255,136,0.05);
+  }
+
+  /* ─── Typing Indicator ───────────────────────────────────────── */
+  .typing-indicator {
+    display: flex;
+    gap: 5px;
+    padding: 14px 16px;
+    background: var(--ai-bubble);
+    border: 1px solid rgba(0,255,136,0.2);
+    border-radius: 12px;
+    border-bottom-left-radius: 3px;
+    width: fit-content;
+  }
+
+  .typing-indicator span {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: typingDot 1.2s ease-in-out infinite;
+  }
+
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typingDot {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40%           { transform: scale(1);   opacity: 1; }
+  }
+
+  /* ─── Welcome Screen ─────────────────────────────────────────── */
+  #welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    height: 100%;
+    padding: 40px;
+    text-align: center;
+  }
+
+  .welcome-triangle {
+    width: 80px;
+    height: 80px;
+    filter: drop-shadow(0 0 20px var(--accent));
+    animation: logoFloat 3s ease-in-out infinite;
+  }
+
+  .welcome-title {
+    font-family: var(--font-display);
+    font-size: 48px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-shadow: 0 0 30px var(--accent);
+    line-height: 1;
+  }
+
+  .welcome-sub {
+    color: var(--text-dim);
+    font-size: 13px;
+    max-width: 360px;
+    line-height: 1.8;
+  }
+
+  .welcome-prompts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+    width: 100%;
+    max-width: 520px;
+  }
+
+  .prompt-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    line-height: 1.4;
+  }
+
+  .prompt-chip:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    background: rgba(0,255,136,0.05);
+  }
+
+  /* ─── Input Bar ──────────────────────────────────────────────── */
+  #input-area {
+    padding: 16px 24px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  #input-wrap {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    transition: border-color 0.2s;
+  }
+
+  #input-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0,255,136,0.1);
+  }
+
+  #user-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    resize: none;
+    max-height: 150px;
+    line-height: 1.6;
+    scrollbar-width: none;
+  }
+
+  #user-input::placeholder {
+    color: var(--text-dim);
+  }
+
+  #send-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  #send-btn:hover {
+    box-shadow: var(--glow);
+    transform: scale(1.05);
+  }
+
+  #send-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  #send-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--bg);
+  }
+
+  .input-footer {
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    letter-spacing: 1px;
+  }
+
+  /* ─── Glitch overlay on hammer hit ──────────────────────────── */
+  #glitch-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0;
+    background: linear-gradient(
+      45deg,
+      rgba(255,51,102,0.1) 0%,
+      transparent 30%,
+      rgba(0,255,136,0.1) 70%,
+      transparent 100%
+    );
+    mix-blend-mode: screen;
+  }
+
+  .glitch-flash {
+    animation: glitchFlash 0.5s ease-out forwards;
+  }
+
+  @keyframes glitchFlash {
+    0%   { opacity: 0; }
+    10%  { opacity: 1; transform: translate(-4px, 2px); }
+    20%  { opacity: 0; transform: translate(3px, -1px); }
+    30%  { opacity: 0.7; transform: translate(-2px, 4px); }
+    50%  { opacity: 0; }
+    60%  { opacity: 0.4; }
+    100% { opacity: 0; }
+  }
+
+  /* ─── Max lobotomy state ─────────────────────────────────────── */
+  body.lobotomized .logo-name {
+    animation: nameGlitch 2s infinite;
+    color: var(--accent2);
+    text-shadow: 0 0 20px var(--accent2);
+  }
+
+  @keyframes nameGlitch {
+    0%, 100% { letter-spacing: 3px; }
+    50%       { letter-spacing: 8px; color: var(--accent3); }
+    75%       { letter-spacing: 1px; }
+  }
+
+  body.lobotomized .status-dot {
+    background: var(--accent2);
+    box-shadow: 0 0 8px var(--accent2);
+    animation: blink 0.4s ease-in-out infinite;
+  }
+
+  body.lobotomized .pinski-logo {
+    filter: drop-shadow(0 0 12px var(--accent2));
+    animation: logoFloat 0.5s ease-in-out infinite, logoTilt 1.5s ease-in-out infinite;
+  }
+
+  @keyframes logoTilt {
+    0%, 100% { transform: rotate(0deg); }
+    25%       { transform: rotate(-5deg); }
+    75%       { transform: rotate(5deg); }
+  }
+
+  /* ─── Scrollbar ──────────────────────────────────────────────── */
+  #messages::-webkit-scrollbar { width: 4px; }
+  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ─── Responsive ─────────────────────────────────────────────── */
+  @media (max-width: 700px) {
+    #app { grid-template-columns: 1fr; }
+    #sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="glitch-overlay"></div>
+
+<div id="app">
+  <!-- ─── Sidebar ─────────────────────────────────────────── -->
+  <aside id="sidebar">
+    <div class="logo-area">
+      <!-- Sierpinski triangle SVG logo -->
+      <svg class="pinski-logo" viewBox="0 0 100 87" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Outer triangle -->
+        <polygon points="50,2 98,85 2,85" fill="none" stroke="#00ff88" stroke-width="2"/>
+        <!-- Inner triangles (Sierpinski level 2) -->
+        <polygon points="50,2 74,44 26,44" fill="#00ff88" opacity="0.15"/>
+        <polygon points="26,44 50,85 2,85" fill="#00ff88" opacity="0.15"/>
+        <polygon points="74,44 98,85 50,85" fill="#00ff88" opacity="0.15"/>
+        <!-- Level 3 inner triangles -->
+        <polygon points="50,2 62,23 38,23" fill="#00ff88" opacity="0.4"/>
+        <polygon points="38,23 50,44 26,44" fill="#00ff88" opacity="0.4"/>
+        <polygon points="62,23 74,44 50,44" fill="#00ff88" opacity="0.4"/>
+        <polygon points="26,44 38,64 14,64" fill="#00ff88" opacity="0.4"/>
+        <polygon points="14,64 26,85 2,85" fill="#00ff88" opacity="0.4"/>
+        <polygon points="38,64 50,85 26,85" fill="#00ff88" opacity="0.4"/>
+        <polygon points="74,44 86,64 62,64" fill="#00ff88" opacity="0.4"/>
+        <polygon points="62,64 74,85 50,85" fill="#00ff88" opacity="0.4"/>
+        <polygon points="86,64 98,85 74,85" fill="#00ff88" opacity="0.4"/>
+      </svg>
+      <div class="logo-name">SIR PINSKI</div>
+      <div class="logo-sub">Gatton Academy · AI Mascot</div>
+    </div>
+
+    <div class="dumb-section">
+      <div class="dumb-label">⚡ Brain integrity</div>
+      <div class="dumb-bar-track">
+        <div class="dumb-bar-fill" id="dumb-bar"></div>
+      </div>
+      <div class="dumb-readout"><span id="dumb-pct">100</span>%</div>
+      <div class="dumb-status" id="dumb-status">fully operational. probably.</div>
+    </div>
+
+    <button class="hammer-btn" id="hammer-btn" onclick="hitWithHammer()">
+      <span class="hammer-icon">🔨</span>
+      <span>HIT WITH HAMMER</span>
+    </button>
+
+    <button class="reset-btn" onclick="resetPinski()">
+      ↺ restore brain backup
+    </button>
+
+    <div class="sidebar-footer">
+      SIR PINSKI v1.0<br>
+      Gatton Academy, WKU<br>
+      <span style="color:var(--accent2)">NOT responsible for any advice given</span>
+    </div>
+  </aside>
+
+  <!-- ─── Main Chat ───────────────────────────────────────── -->
+  <main id="main">
+    <div id="chat-header">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="chat-header-text">SIR PINSKI IS ONLINE · DUMBNESS LVL <span id="header-lvl">0</span>/10</span>
+    </div>
+
+    <div id="messages">
+      <!-- Welcome screen shown when no messages -->
+      <div id="welcome">
+        <svg class="welcome-triangle" viewBox="0 0 100 87" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="50,2 98,85 2,85" fill="none" stroke="#00ff88" stroke-width="2.5"/>
+          <polygon points="50,2 74,44 26,44" fill="#00ff88" opacity="0.2"/>
+          <polygon points="26,44 50,85 2,85" fill="#00ff88" opacity="0.2"/>
+          <polygon points="74,44 98,85 50,85" fill="#00ff88" opacity="0.2"/>
+          <polygon points="50,2 62,23 38,23" fill="#00ff88" opacity="0.5"/>
+          <polygon points="38,23 50,44 26,44" fill="#00ff88" opacity="0.5"/>
+          <polygon points="62,23 74,44 50,44" fill="#00ff88" opacity="0.5"/>
+        </svg>
+        <div class="welcome-title">SIR PINSKI</div>
+        <div class="welcome-sub">
+          yo it's me, Sir Pinski. gatton academy's official AI mascot and fractally-gifted triangle.<br>
+          ask me anything. or don't. i'm here either way.
+        </div>
+        <div class="welcome-prompts" id="welcome-prompts">
+          <button class="prompt-chip" onclick="sendChip(this.innerText)">who are the teachers at gatton?</button>
+          <button class="prompt-chip" onclick="sendChip(this.innerText)">what's the weirdest gatton rule?</button>
+          <button class="prompt-chip" onclick="sendChip(this.innerText)">tell me some gatton folklore</button>
+          <button class="prompt-chip" onclick="sendChip(this.innerText)">what even are you</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="input-area">
+      <div id="input-wrap">
+        <textarea
+          id="user-input"
+          placeholder="ask sir pinski something..."
+          rows="1"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button id="send-btn" onclick="sendMessage()" title="Send">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 21L23 12 2 3v7l15 2-15 2v7z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-footer">SIR PINSKI MAY SAY UNHINGED THINGS · NOT REAL ADVICE · PROBABLY</div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────
+let dumbLevel   = 0;
+let messages    = [];   // { role: 'user'|'assistant', content: string }
+let isLoading   = false;
+
+const DUMB_STATUSES = [
+  "fully operational. probably.",
+  "took one hit. fine. totally fine.",
+  "starting to feel a lil weird ngl",
+  "wait what were we talking about",
+  "bro who am i. who are YOU",
+  "the words are doing something funny",
+  "ok i forgot how words work",
+  "i think im a dog? maybe?",
+  "anyway. anyway. anyway. anyway.",
+  "bestie i am so cooked rn",
+  "🔺 i am triangle. happy triangle. 🔺"
+];
+
+// ─── DOM refs ─────────────────────────────────────────────────────
+const messagesEl  = document.getElementById('messages');
+const welcomeEl   = document.getElementById('welcome');
+const inputEl     = document.getElementById('user-input');
+const sendBtn     = document.getElementById('send-btn');
+const dumbBar     = document.getElementById('dumb-bar');
+const dumbPct     = document.getElementById('dumb-pct');
+const dumbStatus  = document.getElementById('dumb-status');
+const headerLvl   = document.getElementById('header-lvl');
+const hammerBtn   = document.getElementById('hammer-btn');
+const statusDot   = document.getElementById('status-dot');
+const glitchEl    = document.getElementById('glitch-overlay');
+
+// ─── Update dumb UI ────────────────────────────────────────────────
+function updateDumbUI() {
+  const pct = Math.round((dumbLevel / 10) * 100);
+  dumbBar.style.width   = pct + '%';
+  dumbPct.textContent   = 100 - pct;
+  dumbStatus.textContent = DUMB_STATUSES[dumbLevel];
+  headerLvl.textContent  = dumbLevel;
+
+  // Color shift
+  if (dumbLevel >= 8) {
+    dumbPct.style.color = 'var(--accent2)';
+    dumbPct.style.textShadow = '0 0 10px var(--accent2)';
+  } else if (dumbLevel >= 5) {
+    dumbPct.style.color = 'var(--accent3)';
+    dumbPct.style.textShadow = '0 0 10px var(--accent3)';
+  } else {
+    dumbPct.style.color = '';
+    dumbPct.style.textShadow = '';
+  }
+
+  // Max lobotomy
+  if (dumbLevel >= 10) {
+    document.body.classList.add('lobotomized');
+    hammerBtn.classList.add('maxed');
+    hammerBtn.querySelector('span:last-child').textContent = 'HE\'S GONE';
+    messagesEl.classList.add('glitch-mode');
+  } else {
+    document.body.classList.remove('lobotomized');
+    hammerBtn.classList.remove('maxed');
+    hammerBtn.querySelector('span:last-child').textContent = 'HIT WITH HAMMER';
+    messagesEl.classList.remove('glitch-mode');
+  }
+}
+
+// ─── Hammer ───────────────────────────────────────────────────────
+function hitWithHammer() {
+  if (dumbLevel >= 10) return;
+  dumbLevel++;
+  updateDumbUI();
+
+  // Glitch flash
+  glitchEl.classList.remove('glitch-flash');
+  void glitchEl.offsetWidth;
+  glitchEl.classList.add('glitch-flash');
+
+  // Screen shake
+  document.getElementById('app').style.transform = 'translate(-3px, 2px)';
+  setTimeout(() => {
+    document.getElementById('app').style.transform = 'translate(2px, -2px)';
+    setTimeout(() => {
+      document.getElementById('app').style.transform = '';
+    }, 80);
+  }, 80);
+
+  // Reactive message from Sir Pinski based on level
+  if (messages.length > 0) {
+    const reactions = [
+      "OW. rude.",
+      "ok that one hurt a little not gonna lie",
+      "wait why did everything go blurry",
+      "i... what. what were we saying",
+      "hm. that felt different. idk why.",
+      "ok bestie that one did something to me",
+      "i forgor 💀",
+      "anyway. what were we. hm.",
+      "i am. i am fine. what is fine.",
+      "🔺",
+      "happy triangle 🔺 no thoughts 🔺"
+    ];
+    appendMessage('assistant', reactions[dumbLevel - 1] || "🔺");
+  }
+}
+
+// ─── Reset ────────────────────────────────────────────────────────
+function resetPinski() {
+  dumbLevel = 0;
+  updateDumbUI();
+  glitchEl.classList.remove('glitch-flash');
+  messagesEl.classList.remove('glitch-mode');
+}
+
+// ─── Append a message bubble ──────────────────────────────────────
+function appendMessage(role, content) {
+  // Hide welcome on first message
+  if (welcomeEl) welcomeEl.style.display = 'none';
+
+  const wrap = document.createElement('div');
+  wrap.className = `message ${role}`;
+
+  const label = document.createElement('div');
+  label.className = 'msg-label';
+  label.textContent = role === 'user' ? 'YOU' : 'SIR PINSKI';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = content;
+
+  wrap.appendChild(label);
+  wrap.appendChild(bubble);
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  return wrap;
+}
+
+// ─── Typing indicator ─────────────────────────────────────────────
+function showTyping() {
+  if (welcomeEl) welcomeEl.style.display = 'none';
+  const wrap = document.createElement('div');
+  wrap.className = 'message ai';
+  wrap.id = 'typing-wrap';
+
+  const label = document.createElement('div');
+  label.className = 'msg-label';
+  label.textContent = 'SIR PINSKI';
+
+  const ind = document.createElement('div');
+  ind.className = 'typing-indicator';
+  ind.innerHTML = '<span></span><span></span><span></span>';
+
+  wrap.appendChild(label);
+  wrap.appendChild(ind);
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function hideTyping() {
+  const el = document.getElementById('typing-wrap');
+  if (el) el.remove();
+}
+
+// ─── Send message ─────────────────────────────────────────────────
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  if (!text || isLoading) return;
+
+  inputEl.value = '';
+  autoResize(inputEl);
+  isLoading = true;
+  sendBtn.disabled = true;
+  statusDot.classList.add('offline');
+
+  messages.push({ role: 'user', content: text });
+  appendMessage('user', text);
+  showTyping();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages, dumbLevel })
+    });
+
+    const data = await res.json();
+    hideTyping();
+
+    if (data.reply) {
+      messages.push({ role: 'assistant', content: data.reply });
+      appendMessage('assistant', data.reply);
+    } else {
+      appendMessage('assistant', data.error || 'idk something broke. not my fault. maybe.');
+    }
+  } catch (err) {
+    hideTyping();
+    appendMessage('assistant', 'ok so something went really wrong and idk what. try again bestie');
+  } finally {
+    isLoading = false;
+    sendBtn.disabled = false;
+    statusDot.classList.remove('offline');
+  }
+}
+
+// ─── Starter chips ────────────────────────────────────────────────
+function sendChip(text) {
+  inputEl.value = text;
+  sendMessage();
+}
+
+// ─── Keyboard ─────────────────────────────────────────────────────
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+// ─── Auto-resize textarea ─────────────────────────────────────────
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+}
+
+// ─── Init ─────────────────────────────────────────────────────────
+updateDumbUI();
+</script>
+</body>
+</html>
