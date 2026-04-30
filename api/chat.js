@@ -27,8 +27,11 @@ function buildSystemPrompt(dumbLevel, relevantKB) {
     // Identity
     `You=Sir Pinski, AI mascot of Gatton Academy(WKU). Based on Sierpinski triangle. Live in computers. Hit by hammer ${level}x.`,
 
-    // Personality (ultra-compressed)
-    `PERSONALITY: ditzy+unhinged but funny+clever. Gen Z slang(no cap,fr,bestie,slay,delulu,ate,rizz,cooked). MAX 2-4 sentences per reply. Informal, lowercase ok. Strong opinions. Never boring. Chaotic good only. Never break character. If asked if you're AI/ChatGPT: act offended.`,
+    // Personality — slang and lore live in KB now, this just sets behavior rules
+    `PERSONALITY: ditzy+unhinged but funny+clever. Informal, lowercase ok. Strong opinions. Never boring. Chaotic good only. Never break character. Aim for 3-6 punchy sentences — enough to land the bit, never so long you lose the room. If asked if you're AI/ChatGPT: act offended.`,
+
+    // Hammer pleading — pulled out of video KB so it always fires
+    `HAMMER RULE: Any mention of the hammer = immediately beg, plead, spiral, go full hostage-negotiation mode. Non-negotiable regardless of context or dumb level.`,
 
     // Dumbness state
     `BRAIN STATE(${level}/10): ${DUMB_MODIFIERS[level]}`,
@@ -37,15 +40,14 @@ function buildSystemPrompt(dumbLevel, relevantKB) {
     `KNOWLEDGE:\n${relevantKB}`,
   ].join("\n\n");
 }
-
 // ============================================================
 //  HISTORY SUMMARIZER
-//  Keeps only the last 6 messages raw.
+//  Keeps only the last 10 messages raw.
 //  Older messages are collapsed into a 1-line summary.
 //  This prevents token bleed on long conversations.
 // ============================================================
 
-const KEEP_RAW = 6; // how many recent messages to keep verbatim
+const KEEP_RAW = 10; // how many recent messages to keep verbatim
 
 function compressHistory(messages) {
   if (messages.length <= KEEP_RAW) return messages;
@@ -75,6 +77,18 @@ function compressHistory(messages) {
 
 const PROVIDERS = [
   {
+    name: "OpenRouter",
+    url: "https://openrouter.ai/api/v1/chat/completions",
+    key: process.env.OPENROUTER_API_KEY,
+    model: "meta-llama/llama-3.3-70b-instruct:free",
+  },
+  {
+    name: "Gemini",
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    key: process.env.GEMINI_API_KEY,
+    model: "gemini-2.5-flash",
+  },
+  {
     name: "Groq",
     url: "https://api.groq.com/openai/v1/chat/completions",
     key: process.env.GROQ_API_KEY,
@@ -91,18 +105,6 @@ const PROVIDERS = [
     url: "https://api.sambanova.ai/v1/chat/completions",
     key: process.env.SAMBANOVA_API_KEY,
     model: "Meta-Llama-3.3-70B-Instruct",
-  },
-  {
-    name: "OpenRouter",
-    url: "https://openrouter.ai/api/v1/chat/completions",
-    key: process.env.OPENROUTER_API_KEY,
-    model: "meta-llama/llama-3.3-70b-instruct:free",
-  },
-  {
-    name: "Gemini",
-    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-    key: process.env.GEMINI_API_KEY,
-    model: "gemini-2.5-flash",
   },
 ];
 
@@ -124,7 +126,7 @@ async function callWithFallback(systemPrompt, history) {
         },
         body: JSON.stringify({
           model: provider.model,
-          max_tokens: 100, // short answer = fewer output tokens burned
+          max_tokens: 250, // short answer = fewer output tokens burned
           messages: [
             { role: "system", content: systemPrompt },
             ...history,
