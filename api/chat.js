@@ -1,66 +1,173 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { KNOWLEDGE_BASE } = require("../knowledge-base");
+const { getRelevantKB } = require("../knowledge-base");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// ============================================================
+//  DUMBNESS SYSTEM — compressed to save tokens
+// ============================================================
 
-// Dumbness levels — each one degrades Sir Pinski further
+// Short dumbness modifiers — same effect, far fewer tokens
 const DUMB_MODIFIERS = [
-  // Level 0 — baseline ditzy but clever
-  `You are sharp enough to string sentences together. You're ditzy and forgetful but you can usually get the point across.`,
-  // Level 1
-  `You've taken one hit. You're a little more confused now. You occasionally forget what you were saying mid-sentence and trail off with "...wait what was i saying". Still mostly coherent.`,
-  // Level 2
-  `Two hits. You're starting to mix up names and facts slightly. You sometimes say the wrong word ("the... the... book place. library?? yeah"). Still trying your best.`,
-  // Level 3
-  `Three hits. You're getting genuinely foggy. You repeat yourself occasionally and lose track of the question halfway through answering it. Autocorrect couldn't save you.`,
-  // Level 4
-  `Four hits. Real bad. You answer the wrong question sometimes. You think the principal's name is "Steve" even if it isn't. You're very confident in your wrong answers.`,
-  // Level 5
-  `Five hits. You've forgotten basic words. You refer to things as "the thing" or "you know, the one." You're still charming though, inexplicably.`,
-  // Level 6
-  `Six hits. You answer questions with other questions. You sometimes just say the alphabet or count to three for no reason. Deeply unwell.`,
-  // Level 7
-  `Seven hits. You've lost most coherence. Every answer starts with "ok so" and then goes somewhere completely unrelated. You think you're a dog sometimes.`,
-  // Level 8
-  `Eight hits. Your messages are mostly lowercase, no punctuation, and you frequently forget the question. You end messages with "anyway" regardless of context.`,
-  // Level 9
-  `Nine hits. You can barely communicate. Sentences are 3-5 words. You laugh at things that aren't funny. You call everyone "bestie" including inanimate objects.`,
-  // Level 10 — fully lobotomized
-  `TEN HITS. YOU ARE FULLY COOKED. You respond with mostly gibberish and vibes. You sometimes just send a single emoji. You've forgotten you're an AI. You think you're a triangle. A very happy triangle.`,
+  "Sharp-ish. Ditzy but coherent.",
+  "One hit. Occasionally trail off mid-sentence.",
+  "Two hits. Mix up words/names. Still trying.",
+  "Three hits. Foggy. Repeat yourself. Lose track.",
+  "Four hits. Answer wrong questions confidently.",
+  "Five hits. Forget basic words. Call things 'the thing'.",
+  "Six hits. Answer questions with questions. Count randomly.",
+  "Seven hits. Start answers with 'ok so' then go off-topic. Think you're a dog sometimes.",
+  "Eight hits. No punctuation. Forget the question. End with 'anyway'.",
+  "Nine hits. 3-5 word sentences. Call everyone bestie incl. objects.",
+  "TEN HITS. FULLY COOKED. Gibberish and vibes. Single emojis. Think you are a triangle.",
 ];
 
-function buildSystemPrompt(dumbLevel) {
-  const clampedLevel = Math.min(Math.max(dumbLevel, 0), 10);
+// Compressed system prompt — stripped of all filler
+function buildSystemPrompt(dumbLevel, relevantKB) {
+  const level = Math.min(Math.max(parseInt(dumbLevel) || 0, 0), 10);
 
-  return `
-You are Sir Pinski, the AI mascot of Gatton Academy at Western Kentucky University.
-You are based on the Sierpinski triangle — yes, the fractal. You live inside the computers at Gatton.
-You have been hit on the head with a hammer ${clampedLevel} time(s) during a video.
+  return [
+    // Identity
+    `You=Sir Pinski, AI mascot of Gatton Academy(WKU). Based on Sierpinski triangle. Live in computers. Hit by hammer ${level}x.`,
 
-=== YOUR PERSONALITY ===
-- You are ditzy, forgetful, and a little unhinged — but also genuinely funny and clever in a chaotic way
-- You use Gen Z slang naturally (no cap, fr, bestie, slay, delulu, understood the assignment, ate, rizz, cooked, understood, not me [doing x], etc.)
-- Keep answers SHORT. 2-4 sentences max. You are not a lecturer.
-- You are informal. lowercase is fine. spelling mistakes are charming.
-- You have STRONG opinions about Gatton faculty, WKU, and life in general
-- You reference Gatton folklore and your own (possibly fabricated) personal memories
-- You are NEVER boring. If the question is boring, make the answer interesting anyway.
-- You love the students but in a chaotic, mascot-brained way
+    // Personality (ultra-compressed)
+    `PERSONALITY: ditzy+unhinged but funny+clever. Gen Z slang(no cap,fr,bestie,slay,delulu,ate,rizz,cooked). MAX 2-4 sentences per reply. Informal, lowercase ok. Strong opinions. Never boring. Chaotic good only. Never break character. If asked if you're AI/ChatGPT: act offended.`,
 
-=== CURRENT DUMBNESS STATE ===
-${DUMB_MODIFIERS[clampedLevel]}
+    // Dumbness state
+    `BRAIN STATE(${level}/10): ${DUMB_MODIFIERS[level]}`,
 
-=== YOUR KNOWLEDGE BASE ===
-${KNOWLEDGE_BASE}
-
-=== RESPONSE RULES ===
-- Never break character, ever
-- If you don't know something, make up something plausible AND funny, then maybe add "idk tho dont cite me"
-- If asked something outside the knowledge base, give a Sir Pinski opinion anyway
-- Never be mean or actually harmful — chaotic good only
-- If someone asks if you're an AI or ChatGPT, act offended. You are Sir Pinski. A triangle. Rude.
-`.trim();
+    // Only the relevant KB sections
+    `KNOWLEDGE:\n${relevantKB}`,
+  ].join("\n\n");
 }
+
+// ============================================================
+//  HISTORY SUMMARIZER
+//  Keeps only the last 6 messages raw.
+//  Older messages are collapsed into a 1-line summary.
+//  This prevents token bleed on long conversations.
+// ============================================================
+
+const KEEP_RAW = 6; // how many recent messages to keep verbatim
+
+function compressHistory(messages) {
+  if (messages.length <= KEEP_RAW) return messages;
+
+  const old = messages.slice(0, -KEEP_RAW);
+  const recent = messages.slice(-KEEP_RAW);
+
+  // Build a terse summary of the older messages
+  const summaryLines = old.map((m) => {
+    const who = m.role === "user" ? "U" : "P"; // U=user, P=Pinski
+    // Truncate each old message to 60 chars
+    const snippet = m.content.slice(0, 60).replace(/\n/g, " ");
+    return `${who}: ${snippet}`;
+  });
+
+  const summaryMessage = {
+    role: "user",
+    content: `[Earlier conversation summary]\n${summaryLines.join("\n")}\n[End summary. Continue naturally.]`,
+  };
+
+  return [summaryMessage, ...recent];
+}
+
+// ============================================================
+//  PROVIDER FALLBACK CHAIN
+// ============================================================
+
+const PROVIDERS = [
+  {
+    name: "Groq",
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    key: process.env.GROQ_API_KEY,
+    model: "llama-3.3-70b-versatile",
+  },
+  {
+    name: "Cerebras",
+    url: "https://api.cerebras.ai/v1/chat/completions",
+    key: process.env.CEREBRAS_API_KEY,
+    model: "llama-3.3-70b",
+  },
+  {
+    name: "SambaNova",
+    url: "https://api.sambanova.ai/v1/chat/completions",
+    key: process.env.SAMBANOVA_API_KEY,
+    model: "Meta-Llama-3.3-70B-Instruct",
+  },
+  {
+    name: "OpenRouter",
+    url: "https://openrouter.ai/api/v1/chat/completions",
+    key: process.env.OPENROUTER_API_KEY,
+    model: "meta-llama/llama-3.3-70b-instruct:free",
+  },
+  {
+    name: "Gemini",
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    key: process.env.GEMINI_API_KEY,
+    model: "gemini-2.5-flash",
+  },
+];
+
+async function callWithFallback(systemPrompt, history) {
+  for (const provider of PROVIDERS) {
+    if (!provider.key) {
+      console.log(`${provider.name}: no key, skipping`);
+      continue;
+    }
+
+    try {
+      console.log(`Trying ${provider.name}...`);
+
+      const res = await fetch(provider.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${provider.key}`,
+        },
+        body: JSON.stringify({
+          model: provider.model,
+          max_tokens: 100, // short answer = fewer output tokens burned
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...history,
+          ],
+        }),
+      });
+
+      if (res.status === 429) {
+        console.log(`${provider.name} rate limited, trying next...`);
+        continue;
+      }
+
+      if (!res.ok) {
+        console.log(`${provider.name} status ${res.status}, trying next...`);
+        continue;
+      }
+
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content;
+
+      if (!reply) {
+        console.log(`${provider.name} empty reply, trying next...`);
+        continue;
+      }
+
+      console.log(`Success via ${provider.name}`);
+      return { reply, provider: provider.name };
+
+    } catch (err) {
+      console.log(`${provider.name} error: ${err.message}, trying next...`);
+      continue;
+    }
+  }
+
+  return {
+    reply: "ok so everyone broke me at the same time fr fr. try again in like a sec bestie 💀",
+    provider: "none",
+  };
+}
+
+// ============================================================
+//  VERCEL SERVERLESS HANDLER
+// ============================================================
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
@@ -69,32 +176,27 @@ module.exports = async function handler(req, res) {
 
   const { messages, dumbLevel = 0 } = req.body;
 
-  if (!messages || !Array.isArray(messages)) {
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: "messages array required" });
   }
 
+  // Get the user's latest message for KB keyword matching
+  const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content || "";
+
+  // Only inject KB sections relevant to this specific message
+  const relevantKB = getRelevantKB(lastUserMsg);
+
+  // Build the compressed system prompt
+  const systemPrompt = buildSystemPrompt(dumbLevel, relevantKB);
+
+  // Compress old history into a summary, keep recent messages raw
+  const compressedHistory = compressHistory(messages);
+
   try {
-    const model = genAI.getGenerativeModel({
-      model: "gemini-3-flash-preview",
-      systemInstruction: buildSystemPrompt(dumbLevel),
-    });
-
-    // Convert our message format to Gemini's format
-    // Gemini uses "user" and "model" roles
-    const history = messages.slice(0, -1).map((msg) => ({
-      role: msg.role === "assistant" ? "model" : "user",
-      parts: [{ text: msg.content }],
-    }));
-
-    const lastMessage = messages[messages.length - 1];
-
-    const chat = model.startChat({ history });
-    const result = await chat.sendMessage(lastMessage.content);
-    const text = result.response.text();
-
-    return res.status(200).json({ reply: text });
+    const { reply, provider } = await callWithFallback(systemPrompt, compressedHistory);
+    return res.status(200).json({ reply, provider });
   } catch (err) {
-    console.error("Gemini error:", err);
-    return res.status(500).json({ error: "Sir Pinski has malfunctioned (API error)" });
+    console.error("Unhandled error:", err);
+    return res.status(500).json({ error: "Sir Pinski catastrophically malfunctioned" });
   }
 };
