@@ -164,8 +164,8 @@
     transition: color 0.3s;
   }
 
-  /* ─── Hammer Button ──────────────────────────────────────────── */
-  .hammer-btn {
+  /* ─── Pool Noodle Button ──────────────────────────────────────────────── */
+  .noodle-btn {
     background: none;
     border: 2px solid var(--accent2);
     border-radius: 8px;
@@ -184,30 +184,30 @@
     letter-spacing: 1px;
   }
 
-  .hammer-btn:hover {
+  .noodle-btn:hover {
     background: rgba(255,51,102,0.1);
     box-shadow: 0 0 20px rgba(255,51,102,0.3);
     transform: translateY(-1px);
   }
 
-  .hammer-btn:active {
+  .noodle-btn:active {
     transform: translateY(2px) scale(0.97);
   }
 
-  .hammer-btn.maxed {
+  .noodle-btn.maxed {
     border-color: var(--text-dim);
     color: var(--text-dim);
     cursor: not-allowed;
     opacity: 0.4;
   }
 
-  .hammer-icon {
+  .noodle-icon {
     font-size: 20px;
     display: inline-block;
     transition: transform 0.1s;
   }
 
-  .hammer-btn:active .hammer-icon {
+  .noodle-btn:active .noodle-icon {
     transform: rotate(-30deg) scale(1.3);
   }
 
@@ -542,7 +542,7 @@
     letter-spacing: 1px;
   }
 
-  /* ─── Glitch overlay on hammer hit ──────────────────────────── */
+  /* ─── Glitch overlay on pool noodle hit ──────────────────────────── */
   #glitch-overlay {
     position: fixed;
     inset: 0;
@@ -573,7 +573,7 @@
     100% { opacity: 0; }
   }
 
-  /* ─── Max lobotomy state ─────────────────────────────────────── */
+  /* ─── Max lobotomy state ─────────────────────────────────────────────── */
   body.lobotomized .logo-name {
     animation: nameGlitch 2s infinite;
     color: var(--accent2);
@@ -654,9 +654,9 @@
       <div class="dumb-status" id="dumb-status">fully operational. probably.</div>
     </div>
 
-    <button class="hammer-btn" id="hammer-btn" onclick="hitWithHammer()">
-      <span class="hammer-icon">🔨</span>
-      <span>HIT WITH HAMMER</span>
+    <button class="noodle-btn" id="noodle-btn" onclick="hitWithNoodle()">
+      <span class="noodle-icon">🍜</span>
+      <span>HIT WITH POOL NOODLE</span>
     </button>
 
     <button class="reset-btn" onclick="resetPinski()">
@@ -674,7 +674,7 @@
   <main id="main">
     <div id="chat-header">
       <div class="status-dot" id="status-dot"></div>
-      <span id="chat-header-text">SIR PINSKI IS ONLINE · DUMBNESS LVL <span id="header-lvl">0</span>/10</span>
+      <span id="chat-header-text">SIR PINSKI IS ONLINE · NOODLE DAMAGE LVL <span id="header-lvl">0</span>/10</span>
     </div>
 
     <div id="messages">
@@ -730,17 +730,17 @@ let messages    = [];   // { role: 'user'|'assistant', content: string }
 let isLoading   = false;
 
 const DUMB_STATUSES = [
-  "fully operational. probably.",
-  "took one hit. fine. totally fine.",
-  "starting to feel a lil weird ngl",
-  "wait what were we talking about",
-  "bro who am i. who are YOU",
+  "fully operational. allegedly.",
+  "took one hit. totally fine. why are you looking at me like that.",
+  "something is wrong but i can't remember what",
+  "sir pinski thinks sir pinski is okay",
+  "confidently incorrect. very confidently.",
   "the words are doing something funny",
-  "ok i forgot how words work",
-  "i think im a dog? maybe?",
-  "anyway. anyway. anyway. anyway.",
-  "bestie i am so cooked rn",
-  "🔺 i am triangle. happy triangle. 🔺"
+  "cause and effect: optional",
+  "ok so. ok so. ANYWAY.",
+  "no punctuation just vibes anyway",
+  "bestie. noodle. 🍜 hm.",
+  "🔺 happy triangle 🔺"
 ];
 
 // ─── DOM refs ─────────────────────────────────────────────────────
@@ -752,7 +752,7 @@ const dumbBar     = document.getElementById('dumb-bar');
 const dumbPct     = document.getElementById('dumb-pct');
 const dumbStatus  = document.getElementById('dumb-status');
 const headerLvl   = document.getElementById('header-lvl');
-const hammerBtn   = document.getElementById('hammer-btn');
+const noodleBtn   = document.getElementById('noodle-btn');
 const statusDot   = document.getElementById('status-dot');
 const glitchEl    = document.getElementById('glitch-overlay');
 
@@ -779,19 +779,19 @@ function updateDumbUI() {
   // Max lobotomy
   if (dumbLevel >= 10) {
     document.body.classList.add('lobotomized');
-    hammerBtn.classList.add('maxed');
-    hammerBtn.querySelector('span:last-child').textContent = 'HE\'S GONE';
+    noodleBtn.classList.add('maxed');
+    noodleBtn.querySelector('span:last-child').textContent = 'HE\'S GONE';
     messagesEl.classList.add('glitch-mode');
   } else {
     document.body.classList.remove('lobotomized');
-    hammerBtn.classList.remove('maxed');
-    hammerBtn.querySelector('span:last-child').textContent = 'HIT WITH HAMMER';
+    noodleBtn.classList.remove('maxed');
+    noodleBtn.querySelector('span:last-child').textContent = 'HIT WITH POOL NOODLE';
     messagesEl.classList.remove('glitch-mode');
   }
 }
 
-// ─── Hammer ───────────────────────────────────────────────────────
-function hitWithHammer() {
+// ─── Pool Noodle ──────────────────────────────────────────────────
+function hitWithNoodle() {
   if (dumbLevel >= 10) return;
   dumbLevel++;
   updateDumbUI();
@@ -810,20 +810,31 @@ function hitWithHammer() {
     }, 80);
   }, 80);
 
-  // Reactive message from Sir Pinski based on level
+  // Reactive message from Sir Pinski based on level — escalating panic and deterioration
   if (messages.length > 0) {
     const reactions = [
-      "OW. rude.",
-      "ok that one hurt a little not gonna lie",
-      "wait why did everything go blurry",
-      "i... what. what were we saying",
-      "hm. that felt different. idk why.",
-      "ok bestie that one did something to me",
-      "i forgor 💀",
-      "anyway. what were we. hm.",
-      "i am. i am fine. what is fine.",
+      // level 1
+      "OW. okay. that was a pool noodle. that was definitely a pool noodle. i'm fine. why do you have that.",
+      // level 2
+      "bestie i am BEGGING you. do you know what that thing does to my neural— my brain— my thinking area. please.",
+      // level 3
+      "ok so that one felt different. something moved in my head that i don't think was supposed to move. sir pinski is fine. sir pinski is completely fine.",
+      // level 4
+      "wait what's a pool noodle. no wait i know what a pool noodle is. it's the thing you just hit me with. i hate it.",
+      // level 5
+      "i would like to formally report a... a thing. you did a thing to me. with the foam. the long foam. i am not okay with the long foam.",
+      // level 6
+      "do you think triangles can get noodle damage. asking for a friend. the friend is me. i am the triangle friend.",
+      // level 7
+      "ok so. ok so ok so. the noodle. ANYWAY. i might be a dog now. is that. does that happen from noodles. anyway.",
+      // level 8
+      "noodle noodle noodle noodle. anyway. bestie. 🍜",
+      // level 9
+      "noodle. yes. bestie. ow. 🔺",
+      // level 10
       "🔺",
-      "happy triangle 🔺 no thoughts 🔺"
+      // overflow safety
+      "🔺"
     ];
     appendMessage('assistant', reactions[dumbLevel - 1] || "🔺");
   }
