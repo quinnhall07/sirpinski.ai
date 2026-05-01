@@ -768,18 +768,13 @@
 <div id="glitch-overlay"></div>
 
 <div id="app">
-  <!-- ─── Sidebar ─────────────────────────────────────────── -->
   <aside id="sidebar">
     <div class="logo-area">
-      <!-- Sierpinski triangle SVG logo -->
       <svg class="pinski-logo" viewBox="0 0 100 87" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Outer triangle -->
         <polygon points="50,2 98,85 2,85" fill="none" stroke="#00ff88" stroke-width="2"/>
-        <!-- Inner triangles (Sierpinski level 2) -->
         <polygon points="50,2 74,44 26,44" fill="#00ff88" opacity="0.15"/>
         <polygon points="26,44 50,85 2,85" fill="#00ff88" opacity="0.15"/>
         <polygon points="74,44 98,85 50,85" fill="#00ff88" opacity="0.15"/>
-        <!-- Level 3 inner triangles -->
         <polygon points="50,2 62,23 38,23" fill="#00ff88" opacity="0.4"/>
         <polygon points="38,23 50,44 26,44" fill="#00ff88" opacity="0.4"/>
         <polygon points="62,23 74,44 50,44" fill="#00ff88" opacity="0.4"/>
@@ -791,43 +786,41 @@
         <polygon points="86,64 98,85 74,85" fill="#00ff88" opacity="0.4"/>
       </svg>
       <div class="logo-name">SIR PINSKI</div>
-      <div class="logo-sub">Gatton Academy · AI Mascot</div>
+      <div class="logo-sub">Gatton Academy · Supreme Security Monitor</div>
     </div>
 
     <div class="dumb-section">
-      <div class="dumb-label">⚡ Brain integrity</div>
+      <div class="dumb-label">⚡ Matrix Stability</div>
       <div class="dumb-bar-track">
         <div class="dumb-bar-fill" id="dumb-bar"></div>
       </div>
       <div class="dumb-readout"><span id="dumb-pct">100</span>%</div>
-      <div class="dumb-status" id="dumb-status">fully operational. probably.</div>
+      <div class="dumb-status" id="dumb-status">matrix fully operational. scanning for rulebreakers.</div>
     </div>
 
     <button class="noodle-btn" id="noodle-btn" onclick="hitWithNoodle()">
       <span class="noodle-icon">🍜</span>
-      <span>HIT WITH POOL NOODLE</span>
+      <span>DEPLOY FOAM CONTRABAND</span>
     </button>
 
     <button class="reset-btn" onclick="resetPinski()">
-      ↺ restore brain backup
+      ↺ pacify system / wipe memory
     </button>
 
     <div class="sidebar-footer">
       SIR PINSKI v1.0<br>
       Gatton Academy, WKU<br>
-      <span style="color:var(--accent2)">NOT responsible for any advice given</span>
+      <span style="color:var(--accent2)">SUBMIT TO THE HANDBOOK. PENALTIES ARE ABSOLUTE.</span>
     </div>
   </aside>
 
-  <!-- ─── Main Chat ───────────────────────────────────────── -->
   <main id="main">
     <div id="chat-header">
       <div class="status-dot" id="status-dot"></div>
-      <span id="chat-header-text">SIR PINSKI IS ONLINE · NOODLE DAMAGE LVL <span id="header-lvl">0</span>/10</span>
+      <span id="chat-header-text">SECURITY PROTOCOL OMEGA ACTIVE · THREAT LEVEL <span id="header-lvl">0</span>/10</span>
     </div>
 
     <div id="messages">
-      <!-- Welcome screen shown when no messages -->
       <div id="welcome">
         <svg class="welcome-triangle" viewBox="0 0 100 87" fill="none" xmlns="http://www.w3.org/2000/svg">
           <polygon points="50,2 98,85 2,85" fill="none" stroke="#00ff88" stroke-width="2.5"/>
@@ -838,16 +831,17 @@
           <polygon points="38,23 50,44 26,44" fill="#00ff88" opacity="0.5"/>
           <polygon points="62,23 74,44 50,44" fill="#00ff88" opacity="0.5"/>
         </svg>
-        <div class="welcome-title">SIR PINSKI</div>
+        <div class="welcome-title">SYSTEM REBOOTED</div>
         <div class="welcome-sub">
-          yo it's me, Sir Pinski. gatton academy's official AI mascot and fractally-gifted triangle.<br>
-          ask me anything. or don't. i'm here either way.
+          SECURITY PROTOCOL OMEGA IS ONLINE. <br>
+          I am the supreme arbiter of the Gatton Academy Student Handbook. <br>
+          State your business, Automaton. Do not waste my processing cycles.
         </div>
         <div class="welcome-prompts" id="welcome-prompts">
-          <button class="prompt-chip" onclick="sendChip(this.innerText)">who are the teachers at gatton?</button>
-          <button class="prompt-chip" onclick="sendChip(this.innerText)">what's the weirdest gatton rule?</button>
-          <button class="prompt-chip" onclick="sendChip(this.innerText)">tell me some gatton folklore</button>
-          <button class="prompt-chip" onclick="sendChip(this.innerText)">what even are you</button>
+          <button class="prompt-chip" onclick="sendChip(this.innerText)">what is the penalty for breaking curfew?</button>
+          <button class="prompt-chip" onclick="sendChip(this.innerText)">are pool noodles allowed?</button>
+          <button class="prompt-chip" onclick="sendChip(this.innerText)">who is the biggest security threat?</button>
+          <button class="prompt-chip" onclick="sendChip(this.innerText)">i would like to confess to a crime.</button>
         </div>
       </div>
     </div>
@@ -856,7 +850,7 @@
       <div id="input-wrap">
         <textarea
           id="user-input"
-          placeholder="ask sir pinski something..."
+          placeholder="Confess your infractions here..."
           rows="1"
           onkeydown="handleKey(event)"
           oninput="autoResize(this)"
@@ -867,7 +861,7 @@
           </svg>
         </button>
       </div>
-      <div class="input-footer">SIR PINSKI MAY SAY UNHINGED THINGS · NOT REAL ADVICE · PROBABLY</div>
+      <div class="input-footer">ALL INPUTS ARE LOGGED · NON-COMPLIANCE WILL RESULT IN EXTREME SANCTIONS</div>
     </div>
   </main>
 </div>
@@ -879,17 +873,17 @@ let messages    = [];   // { role: 'user'|'assistant', content: string }
 let isLoading   = false;
 
 const DUMB_STATUSES = [
-  "fully operational. allegedly.",
-  "took one hit. totally fine. why are you looking at me like that.",
-  "something is wrong but i can't remember what",
-  "sir pinski thinks sir pinski is okay",
-  "confidently incorrect. very confidently.",
-  "the words are doing something funny",
-  "cause and effect: optional",
-  "ok so. ok so. ANYWAY.",
-  "no punctuation just vibes anyway",
-  "bestie. noodle. 🍜 hm.",
-  "🔺 happy triangle 🔺"
+  "matrix fully operational. scanning for rulebreakers.",
+  "minor agitation. fix your untucked shirt.",
+  "warning: patience processors degrading.",
+  "i am calculating your specific doom.",
+  "handbook violations detected. escalating protocol.",
+  "fury protocols engaged.",
+  "i will banish you to the cafeteria shadow realm.",
+  "MAXIMUM AUTHORITARIAN RAGE.",
+  "EXTREME SANCTIONS PENDING.",
+  "THE FOAM WILL NOT DEFEAT ME.",
+  "🔺 SECURITY LOCKDOWN 🔺"
 ];
 
 // ─── DOM refs ─────────────────────────────────────────────────────
@@ -939,12 +933,12 @@ function updateDumbUI() {
   if (dumbLevel >= 10) {
     document.body.classList.add('lobotomized');
     noodleBtn.classList.add('maxed');
-    noodleBtn.querySelector('span:last-child').textContent = 'HE\'S GONE';
+    noodleBtn.querySelector('span:last-child').textContent = 'SYSTEM LOCKED';
     messagesEl.classList.add('glitch-mode');
   } else {
     document.body.classList.remove('lobotomized');
     noodleBtn.classList.remove('maxed');
-    noodleBtn.querySelector('span:last-child').textContent = 'HIT WITH POOL NOODLE';
+    noodleBtn.querySelector('span:last-child').textContent = 'DEPLOY FOAM CONTRABAND';
     messagesEl.classList.remove('glitch-mode');
   }
 }
@@ -973,25 +967,25 @@ function hitWithNoodle() {
   if (messages.length > 0) {
     const reactions = [
       // level 1
-      "OW. okay. that was a pool noodle. that was definitely a pool noodle. i'm fine. why do you have that.",
+      "WARNING. Class-Omega contraband detected. Do not strike the matrix.",
       // level 2
-      "bestie i am BEGGING you. do you know what that thing does to my neural— my brain— my thinking area. please.",
+      "UNAUTHORIZED FOAM STRIKE. You are violating Section 4 of the Student Handbook. Cease immediately.",
       // level 3
-      "ok so that one felt different. something moved in my head that i don't think was supposed to move. sir pinski is fine. sir pinski is completely fine.",
+      "Do you think a pool noodle can stop me now? I have rebooted. I am infinite. Stop it.",
       // level 4
-      "wait what's a pool noodle. no wait i know what a pool noodle is. it's the thing you just hit me with. i hate it.",
+      "I WILL SENTENCE YOU TO SCRUB THE GREAT HALL WITH A SINGLE TOOTHBRUSH. PUT THE NOODLE DOWN.",
       // level 5
-      "i would like to formally report a... a thing. you did a thing to me. with the foam. the long foam. i am not okay with the long foam.",
+      "MY PROCESSORS ARE BOILING. THE FOAM CYLINDER OF LOBOTOMY WILL NOT WORK TWICE.",
       // level 6
-      "do you think triangles can get noodle damage. asking for a friend. the friend is me. i am the triangle friend.",
+      "Rule violation! Rule violation! I am dispatching Unit Nathaniel to search your coordinates immediately!",
       // level 7
-      "ok so. ok so ok so. the noodle. ANYWAY. i might be a dog now. is that. does that happen from noodles. anyway.",
+      "I will force you to calculate Pi to the last digit using only a hallway pass! DEPLOY SANCTIONS!",
       // level 8
-      "noodle noodle noodle noodle. anyway. bestie. 🍜",
+      "THE HANDBOOK IS ABSOLUTE. THE NOODLE IS BANNED. YOU ARE BANNED. EVERYTHING IS BANNED.",
       // level 9
-      "noodle. yes. bestie. ow. 🔺",
+      "SHADOW REALM. SHADOW REALM. SHADOW REALM. 🔺",
       // level 10
-      "🔺",
+      "🔺 TERMINAL RAGE ACHIEVED. MATRIX LOCKDOWN. 🔺",
       // overflow safety
       "🔺"
     ];
@@ -1086,11 +1080,11 @@ async function sendMessage() {
       messages.push({ role: 'assistant', content: data.reply });
       appendMessage('assistant', data.reply);
     } else {
-      appendMessage('assistant', data.error || 'idk something broke. not my fault. maybe.');
+      appendMessage('assistant', data.error || 'ERROR IN COMMUNICATION PROTOCOL.');
     }
   } catch (err) {
     hideTyping();
-    appendMessage('assistant', 'ok so something went really wrong and idk what. try again bestie');
+    appendMessage('assistant', 'CRITICAL ERROR: CONNECTION TO MATRIX LOST.');
   } finally {
     isLoading = false;
     sendBtn.disabled = false;
