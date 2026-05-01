@@ -573,6 +573,155 @@
     100% { opacity: 0; }
   }
 
+  /* ─── Progressive Screen Decay ──────────────────────────────────────── */
+  
+  /* Level 1-2: Subtle pixel distortion */
+  body.decay-1 #messages, body.decay-2 #messages {
+    animation: pixelDrift 8s linear infinite;
+  }
+
+  @keyframes pixelDrift {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(1px); }
+    50% { transform: translateX(0); }
+    75% { transform: translateX(-1px); }
+  }
+
+  /* Level 3-4: Text gets blurry occasionally + subtle chromatic aberration */
+  body.decay-3 .bubble, body.decay-4 .bubble {
+    animation: textBlur 5s ease-in-out infinite;
+  }
+
+  @keyframes textBlur {
+    0%, 90%, 100% { filter: none; }
+    95% { filter: blur(0.5px); }
+  }
+
+  body.decay-3 #app, body.decay-4 #app {
+    filter: drop-shadow(1px 0 0 rgba(255,0,0,0.2)) drop-shadow(-1px 0 0 rgba(0,255,255,0.2));
+  }
+
+  /* Level 5-6: Screen tearing effect + intensifying chromatic aberration */
+  body.decay-5 #app::after, body.decay-6 #app::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 100px,
+      rgba(255,51,102,0.05) 100px,
+      rgba(255,51,102,0.05) 102px
+    );
+    pointer-events: none;
+    z-index: 9997;
+    animation: screenTear 4s linear infinite;
+  }
+
+  @keyframes screenTear {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  body.decay-5 #app, body.decay-6 #app {
+    filter: drop-shadow(2px 0 0 rgba(255,0,0,0.4)) drop-shadow(-2px 0 0 rgba(0,255,255,0.4));
+  }
+
+  body.decay-5::before, body.decay-6::before {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+  }
+
+  /* Level 7-8: Color inversion flashes + heavy chromatic aberration */
+  body.decay-7 #messages, body.decay-8 #messages {
+    animation: colorFlash 6s ease-in-out infinite;
+  }
+
+  @keyframes colorFlash {
+    0%, 95%, 100% { filter: none; }
+    96% { filter: invert(1) hue-rotate(180deg); }
+    97% { filter: none; }
+    98% { filter: invert(1); }
+  }
+
+  body.decay-7 #app, body.decay-8 #app {
+    filter: drop-shadow(3px 0 0 rgba(255,0,0,0.5)) drop-shadow(-3px 0 0 rgba(0,255,255,0.5));
+  }
+
+  body.decay-7::before, body.decay-8::before {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.25) 2px,
+      rgba(0,0,0,0.25) 4px
+    );
+  }
+
+  /* Level 9: Everything shakes constantly + extreme chromatic aberration */
+  body.decay-9 #app {
+    animation: constantShake 0.3s linear infinite;
+    filter: drop-shadow(4px 0 0 rgba(255,0,0,0.6)) drop-shadow(-4px 0 0 rgba(0,255,255,0.6));
+  }
+
+  @keyframes constantShake {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(-2px, 2px) rotate(-0.5deg); }
+    50% { transform: translate(2px, -1px) rotate(0.5deg); }
+    75% { transform: translate(-1px, -2px) rotate(-0.3deg); }
+  }
+
+  body.decay-9::before {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 1px,
+      rgba(0,0,0,0.35) 1px,
+      rgba(0,0,0,0.35) 3px
+    );
+    animation: scanroll 2s linear infinite;
+  }
+
+  /* Level 10: Complete breakdown - everything wrong at once */
+  body.decay-10 #app {
+    animation: totalCollapse 1s ease-in-out infinite;
+  }
+
+  @keyframes totalCollapse {
+    0% { transform: translate(0, 0) rotate(0deg) scale(1); filter: hue-rotate(0deg) saturate(3) drop-shadow(5px 0 0 rgba(255,0,0,0.8)) drop-shadow(-5px 0 0 rgba(0,255,255,0.8)); }
+    10% { transform: translate(-5px, 2px) rotate(-1deg) scale(0.99); filter: hue-rotate(30deg) saturate(2) drop-shadow(4px 0 0 rgba(255,0,0,0.7)) drop-shadow(-4px 0 0 rgba(0,255,255,0.7)); }
+    20% { transform: translate(3px, -3px) rotate(1deg) scale(1.01); filter: hue-rotate(-20deg) saturate(4) drop-shadow(6px 0 0 rgba(255,0,0,0.9)) drop-shadow(-6px 0 0 rgba(0,255,255,0.9)); }
+    30% { transform: translate(-2px, 4px) rotate(-0.5deg) scale(0.98); filter: hue-rotate(50deg) saturate(1.5) drop-shadow(3px 0 0 rgba(255,0,0,0.6)) drop-shadow(-3px 0 0 rgba(0,255,255,0.6)); }
+    40% { transform: translate(4px, -1px) rotate(1.2deg) scale(1.02); filter: hue-rotate(-40deg) saturate(5) drop-shadow(7px 0 0 rgba(255,0,0,1)) drop-shadow(-7px 0 0 rgba(0,255,255,1)); }
+    50% { transform: translate(-3px, -2px) rotate(-1deg) scale(0.99); filter: hue-rotate(60deg) saturate(2.5) drop-shadow(5px 0 0 rgba(255,0,0,0.8)) drop-shadow(-5px 0 0 rgba(0,255,255,0.8)); }
+    60% { transform: translate(2px, 3px) rotate(0.8deg) scale(1.01); filter: hue-rotate(-30deg) saturate(3.5) drop-shadow(4px 0 0 rgba(255,0,0,0.7)) drop-shadow(-4px 0 0 rgba(0,255,255,0.7)); }
+    70% { transform: translate(-4px, 1px) rotate(-1.2deg) scale(0.98); filter: hue-rotate(40deg) saturate(2) drop-shadow(6px 0 0 rgba(255,0,0,0.9)) drop-shadow(-6px 0 0 rgba(0,255,255,0.9)); }
+    80% { transform: translate(1px, -4px) rotate(1deg) scale(1.02); filter: hue-rotate(-50deg) saturate(4.5) drop-shadow(8px 0 0 rgba(255,0,0,1)) drop-shadow(-8px 0 0 rgba(0,255,255,1)); }
+    90% { transform: translate(-1px, 2px) rotate(-0.7deg) scale(0.99); filter: hue-rotate(20deg) saturate(3) drop-shadow(3px 0 0 rgba(255,0,0,0.6)) drop-shadow(-3px 0 0 rgba(0,255,255,0.6)); }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); filter: hue-rotate(0deg) saturate(3) drop-shadow(5px 0 0 rgba(255,0,0,0.8)) drop-shadow(-5px 0 0 rgba(0,255,255,0.8)); }
+  }
+
+  body.decay-10::before {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 1px,
+      rgba(0,0,0,0.4) 1px,
+      rgba(0,0,0,0.4) 2px
+    );
+    animation: scanroll 1s linear infinite, scanGlitch 3s ease-in-out infinite;
+  }
+
+  @keyframes scanGlitch {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
   /* ─── Max lobotomy state ─────────────────────────────────────────────── */
   body.lobotomized .logo-name {
     animation: nameGlitch 2s infinite;
@@ -763,6 +912,16 @@ function updateDumbUI() {
   dumbPct.textContent   = 100 - pct;
   dumbStatus.textContent = DUMB_STATUSES[dumbLevel];
   headerLvl.textContent  = dumbLevel;
+
+  // Remove all decay classes first
+  for (let i = 0; i <= 10; i++) {
+    document.body.classList.remove(`decay-${i}`);
+  }
+
+  // Add current decay level class
+  if (dumbLevel > 0) {
+    document.body.classList.add(`decay-${dumbLevel}`);
+  }
 
   // Color shift
   if (dumbLevel >= 8) {
