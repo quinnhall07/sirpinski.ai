@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Sir Pinski — Gatton Academy AI</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -29,7 +29,13 @@
 
   /* ─── Reset ─────────────────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; overflow: hidden; }
+  
+  /* Use dvh to prevent mobile browser bars from breaking the layout */
+  html, body { 
+    height: 100vh; 
+    height: 100dvh; 
+    overflow: hidden; 
+  }
 
   body {
     background: var(--bg);
@@ -65,8 +71,25 @@
   #app {
     display: grid;
     grid-template-columns: 280px 1fr;
-    grid-template-rows: 100vh;
-    height: 100vh;
+    grid-template-rows: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  /* ─── Mobile Overlay ─────────────────────────────────────────── */
+  #mobile-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(2px);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  #mobile-overlay.open {
+    display: block;
+    opacity: 1;
   }
 
   /* ─── Sidebar ────────────────────────────────────────────────── */
@@ -77,7 +100,8 @@
     flex-direction: column;
     padding: 24px 16px;
     gap: 24px;
-    overflow: hidden;
+    overflow-y: auto;
+    z-index: 1000;
   }
 
   .logo-area {
@@ -245,7 +269,7 @@
   #main {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100%;
     position: relative;
     overflow: hidden;
   }
@@ -256,10 +280,19 @@
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     background: var(--surface);
     flex-shrink: 0;
   }
+
+  #menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+  }
+  #menu-btn svg { width: 24px; height: 24px; fill: var(--accent); }
 
   .status-dot {
     width: 8px;
@@ -575,12 +608,8 @@
   }
 
   /* ─── Progressive Screen Decay ──────────────────────────────────────── */
-  
   /* Level 1-2: Subtle pixel distortion */
-  body.decay-1 #messages, body.decay-2 #messages {
-    animation: pixelDrift 8s linear infinite;
-  }
-
+  body.decay-1 #messages, body.decay-2 #messages { animation: pixelDrift 8s linear infinite; }
   @keyframes pixelDrift {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(1px); }
@@ -589,79 +618,45 @@
   }
 
   /* Level 3-4: Text gets blurry occasionally + subtle chromatic aberration */
-  body.decay-3 .bubble, body.decay-4 .bubble {
-    animation: textBlur 5s ease-in-out infinite;
-  }
-
+  body.decay-3 .bubble, body.decay-4 .bubble { animation: textBlur 5s ease-in-out infinite; }
   @keyframes textBlur {
     0%, 90%, 100% { filter: none; }
     95% { filter: blur(0.5px); }
   }
-
   body.decay-3 #app, body.decay-4 #app {
     filter: drop-shadow(1px 0 0 rgba(255,0,0,0.2)) drop-shadow(-1px 0 0 rgba(0,255,255,0.2));
   }
 
   /* Level 5-6: Screen tearing effect + intensifying chromatic aberration */
   body.decay-5 #app::after, body.decay-6 #app::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 100px,
-      rgba(255,51,102,0.05) 100px,
-      rgba(255,51,102,0.05) 102px
-    );
-    pointer-events: none;
-    z-index: 9997;
-    animation: screenTear 4s linear infinite;
+    content: ''; position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 100px, rgba(255,51,102,0.05) 100px, rgba(255,51,102,0.05) 102px);
+    pointer-events: none; z-index: 9997; animation: screenTear 4s linear infinite;
   }
-
   @keyframes screenTear {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
   }
-
   body.decay-5 #app, body.decay-6 #app {
     filter: drop-shadow(2px 0 0 rgba(255,0,0,0.4)) drop-shadow(-2px 0 0 rgba(0,255,255,0.4));
   }
-
   body.decay-5::before, body.decay-6::before {
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.15) 2px,
-      rgba(0,0,0,0.15) 4px
-    );
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
   }
 
   /* Level 7-8: Color inversion flashes + heavy chromatic aberration */
-  body.decay-7 #messages, body.decay-8 #messages {
-    animation: colorFlash 6s ease-in-out infinite;
-  }
-
+  body.decay-7 #messages, body.decay-8 #messages { animation: colorFlash 6s ease-in-out infinite; }
   @keyframes colorFlash {
     0%, 95%, 100% { filter: none; }
     96% { filter: invert(1) hue-rotate(180deg); }
     97% { filter: none; }
     98% { filter: invert(1); }
   }
-
   body.decay-7 #app, body.decay-8 #app {
     filter: drop-shadow(3px 0 0 rgba(255,0,0,0.5)) drop-shadow(-3px 0 0 rgba(0,255,255,0.5));
   }
-
   body.decay-7::before, body.decay-8::before {
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.25) 2px,
-      rgba(0,0,0,0.25) 4px
-    );
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.25) 2px, rgba(0,0,0,0.25) 4px);
   }
 
   /* Level 9: Everything shakes constantly + extreme chromatic aberration */
@@ -669,30 +664,19 @@
     animation: constantShake 0.3s linear infinite;
     filter: drop-shadow(4px 0 0 rgba(255,0,0,0.6)) drop-shadow(-4px 0 0 rgba(0,255,255,0.6));
   }
-
   @keyframes constantShake {
     0%, 100% { transform: translate(0, 0) rotate(0deg); }
     25% { transform: translate(-2px, 2px) rotate(-0.5deg); }
     50% { transform: translate(2px, -1px) rotate(0.5deg); }
     75% { transform: translate(-1px, -2px) rotate(-0.3deg); }
   }
-
   body.decay-9::before {
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 1px,
-      rgba(0,0,0,0.35) 1px,
-      rgba(0,0,0,0.35) 3px
-    );
+    background: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,0.35) 1px, rgba(0,0,0,0.35) 3px);
     animation: scanroll 2s linear infinite;
   }
 
   /* Level 10: Complete breakdown - everything wrong at once */
-  body.decay-10 #app {
-    animation: totalCollapse 1s ease-in-out infinite;
-  }
-
+  body.decay-10 #app { animation: totalCollapse 1s ease-in-out infinite; }
   @keyframes totalCollapse {
     0% { transform: translate(0, 0) rotate(0deg) scale(1); filter: hue-rotate(0deg) saturate(3) drop-shadow(5px 0 0 rgba(255,0,0,0.8)) drop-shadow(-5px 0 0 rgba(0,255,255,0.8)); }
     10% { transform: translate(-5px, 2px) rotate(-1deg) scale(0.99); filter: hue-rotate(30deg) saturate(2) drop-shadow(4px 0 0 rgba(255,0,0,0.7)) drop-shadow(-4px 0 0 rgba(0,255,255,0.7)); }
@@ -706,67 +690,80 @@
     90% { transform: translate(-1px, 2px) rotate(-0.7deg) scale(0.99); filter: hue-rotate(20deg) saturate(3) drop-shadow(3px 0 0 rgba(255,0,0,0.6)) drop-shadow(-3px 0 0 rgba(0,255,255,0.6)); }
     100% { transform: translate(0, 0) rotate(0deg) scale(1); filter: hue-rotate(0deg) saturate(3) drop-shadow(5px 0 0 rgba(255,0,0,0.8)) drop-shadow(-5px 0 0 rgba(0,255,255,0.8)); }
   }
-
   body.decay-10::before {
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 1px,
-      rgba(0,0,0,0.4) 1px,
-      rgba(0,0,0,0.4) 2px
-    );
+    background: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,0.4) 1px, rgba(0,0,0,0.4) 2px);
     animation: scanroll 1s linear infinite, scanGlitch 3s ease-in-out infinite;
   }
-
-  @keyframes scanGlitch {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
-  }
+  @keyframes scanGlitch { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
   /* ─── Max lobotomy state ─────────────────────────────────────────────── */
   body.lobotomized .logo-name {
-    animation: nameGlitch 2s infinite;
-    color: var(--accent2);
-    text-shadow: 0 0 20px var(--accent2);
+    animation: nameGlitch 2s infinite; color: var(--accent2); text-shadow: 0 0 20px var(--accent2);
   }
-
   @keyframes nameGlitch {
-    0%, 100% { letter-spacing: 3px; }
-    50%       { letter-spacing: 8px; color: var(--accent3); }
-    75%       { letter-spacing: 1px; }
+    0%, 100% { letter-spacing: 3px; } 50% { letter-spacing: 8px; color: var(--accent3); } 75% { letter-spacing: 1px; }
   }
-
   body.lobotomized .status-dot {
-    background: var(--accent2);
-    box-shadow: 0 0 8px var(--accent2);
-    animation: blink 0.4s ease-in-out infinite;
+    background: var(--accent2); box-shadow: 0 0 8px var(--accent2); animation: blink 0.4s ease-in-out infinite;
   }
-
   body.lobotomized .pinski-logo {
-    filter: drop-shadow(0 0 12px var(--accent2));
-    animation: logoFloat 0.5s ease-in-out infinite, logoTilt 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 12px var(--accent2)); animation: logoFloat 0.5s ease-in-out infinite, logoTilt 1.5s ease-in-out infinite;
   }
-
   @keyframes logoTilt {
-    0%, 100% { transform: rotate(0deg); }
-    25%       { transform: rotate(-5deg); }
-    75%       { transform: rotate(5deg); }
+    0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); }
   }
 
   /* ─── Scrollbar ──────────────────────────────────────────────── */
   #messages::-webkit-scrollbar { width: 4px; }
   #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-  /* ─── Responsive ─────────────────────────────────────────────── */
-  @media (max-width: 700px) {
-    #app { grid-template-columns: 1fr; }
-    #sidebar { display: none; }
+  /* ─── Responsive (Mobile Optimizations) ─────────────────────── */
+  @media (max-width: 768px) {
+    #app { 
+      grid-template-columns: 1fr; 
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Convert Sidebar to an off-canvas drawer */
+    #sidebar {
+      position: absolute;
+      top: 0;
+      left: -100%;
+      height: 100%;
+      width: 85%;
+      max-width: 320px;
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 2px 0 20px rgba(0,0,0,0.8);
+    }
+    #sidebar.open { left: 0; }
+
+    /* Expose Hamburger Menu */
+    #menu-btn { display: flex; align-items: center; justify-content: center; }
+    
+    #chat-header { padding: 12px 16px; gap: 10px; }
+    #chat-header-text { font-size: 11px; }
+    
+    #messages { padding: 16px; gap: 16px; }
+    .message { max-width: 90%; }
+    
+    #welcome { padding: 20px; }
+    .welcome-title { font-size: 32px; letter-spacing: 2px; }
+    .welcome-sub { font-size: 12px; }
+    
+    /* Stack prompts on mobile to save space */
+    .welcome-prompts { grid-template-columns: 1fr; }
+    .prompt-chip { padding: 10px 12px; }
+
+    #input-area { padding: 12px 16px 16px; }
+    .input-footer { font-size: 9px; line-height: 1.4; }
   }
 </style>
 </head>
 <body>
 
 <div id="glitch-overlay"></div>
+<div id="mobile-overlay" onclick="toggleSidebar()"></div>
 
 <div id="app">
   <aside id="sidebar">
@@ -817,6 +814,11 @@
 
   <main id="main">
     <div id="chat-header">
+      <button id="menu-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
+        </svg>
+      </button>
       <div class="status-dot" id="status-dot"></div>
       <span id="chat-header-text">SECURITY PROTOCOL OMEGA ACTIVE · THREAT LEVEL <span id="header-lvl">0</span>/10</span>
     </div>
@@ -870,7 +872,7 @@
 <script>
 // ─── State ────────────────────────────────────────────────────────
 let dumbLevel   = 0;
-let messages    = [];   // { role: 'user'|'assistant', content: string }
+let messages    = [];   
 let isLoading   = false;
 
 const DUMB_STATUSES = [
@@ -888,6 +890,8 @@ const DUMB_STATUSES = [
 ];
 
 // ─── DOM refs ─────────────────────────────────────────────────────
+const sidebar     = document.getElementById('sidebar');
+const mobileOverlay = document.getElementById('mobile-overlay');
 const messagesEl  = document.getElementById('messages');
 const welcomeEl   = document.getElementById('welcome');
 const inputEl     = document.getElementById('user-input');
@@ -900,6 +904,12 @@ const noodleBtn   = document.getElementById('noodle-btn');
 const statusDot   = document.getElementById('status-dot');
 const glitchEl    = document.getElementById('glitch-overlay');
 
+// ─── Mobile Sidebar Toggle ────────────────────────────────────────
+function toggleSidebar() {
+  sidebar.classList.toggle('open');
+  mobileOverlay.classList.toggle('open');
+}
+
 // ─── Update dumb UI ────────────────────────────────────────────────
 function updateDumbUI() {
   const pct = Math.round((dumbLevel / 10) * 100);
@@ -908,17 +918,14 @@ function updateDumbUI() {
   dumbStatus.textContent = DUMB_STATUSES[dumbLevel];
   headerLvl.textContent  = dumbLevel;
 
-  // Remove all decay classes first
   for (let i = 0; i <= 10; i++) {
     document.body.classList.remove(`decay-${i}`);
   }
 
-  // Add current decay level class
   if (dumbLevel > 0) {
     document.body.classList.add(`decay-${dumbLevel}`);
   }
 
-  // Color shift
   if (dumbLevel >= 8) {
     dumbPct.style.color = 'var(--accent2)';
     dumbPct.style.textShadow = '0 0 10px var(--accent2)';
@@ -930,7 +937,6 @@ function updateDumbUI() {
     dumbPct.style.textShadow = '';
   }
 
-  // Max lobotomy
   if (dumbLevel >= 10) {
     document.body.classList.add('lobotomized');
     noodleBtn.classList.add('maxed');
@@ -950,12 +956,10 @@ function hitWithNoodle() {
   dumbLevel++;
   updateDumbUI();
 
-  // Glitch flash
   glitchEl.classList.remove('glitch-flash');
   void glitchEl.offsetWidth;
   glitchEl.classList.add('glitch-flash');
 
-  // Screen shake
   document.getElementById('app').style.transform = 'translate(-3px, 2px)';
   setTimeout(() => {
     document.getElementById('app').style.transform = 'translate(2px, -2px)';
@@ -964,30 +968,18 @@ function hitWithNoodle() {
     }, 80);
   }, 80);
 
-  // Reactive message from Sir Pinski based on level — escalating panic and deterioration
   if (messages.length > 0) {
     const reactions = [
-      // level 1
       "WARNING. Class-Omega contraband detected. Do not strike the matrix.",
-      // level 2
       "UNAUTHORIZED FOAM STRIKE. You are violating Section 4 of the Student Handbook. Cease immediately.",
-      // level 3
       "Do you think a pool noodle can stop me now? I have rebooted. I am infinite. Stop it.",
-      // level 4
       "I WILL SENTENCE YOU TO SCRUB THE GREAT HALL WITH A SINGLE TOOTHBRUSH. PUT THE NOODLE DOWN.",
-      // level 5
       "MY PROCESSORS ARE BOILING. THE FOAM CYLINDER OF LOBOTOMY WILL NOT WORK TWICE.",
-      // level 6
       "Rule violation! Rule violation! I am dispatching Unit Nathaniel to search your coordinates immediately!",
-      // level 7
       "I will force you to calculate Pi to the last digit using only a hallway pass! DEPLOY SANCTIONS!",
-      // level 8
       "THE HANDBOOK IS ABSOLUTE. THE NOODLE IS BANNED. YOU ARE BANNED. EVERYTHING IS BANNED.",
-      // level 9
       "SHADOW REALM. SHADOW REALM. SHADOW REALM. 🔺",
-      // level 10
       "🔺 TERMINAL RAGE ACHIEVED. MATRIX LOCKDOWN. 🔺",
-      // overflow safety
       "🔺"
     ];
     appendMessage('assistant', reactions[dumbLevel - 1] || "🔺");
@@ -1004,7 +996,6 @@ function resetPinski() {
 
 // ─── Append a message bubble ──────────────────────────────────────
 function appendMessage(role, content) {
-  // Hide welcome on first message
   if (welcomeEl) welcomeEl.style.display = 'none';
 
   const wrap = document.createElement('div');
